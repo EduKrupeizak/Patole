@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Você foi patrolado!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+        }
+
+        #duck {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%23FFD700" d="M380.2,214.6c-12.9-37.8-33.2-73-60.1-89c-13.9-8.4-29-12.3-44.4-11.3c-19.9,1.5-39.2,12.1-54.6,30.2c-22.2,26.5-35.4,66.2-36.9,111.9h-55.9c-7.6,0-14.7,3.6-19.2,9.6c-4.5,6-6,13.8-4,21c8.5,31.2,33.1,60,62.9,78.2c-10.3,10.8-16.9,24.5-17.9,40.1c-1.4,22.9,7.4,44.5,24.9,60.7c17.3,16,39.8,24.8,63.3,24.8c10.7,0,21.5-1.8,31.9-5.5c23.6-8.4,42.3-25.2,53-47.4c49.2-2.3,85.8-21,109.2-55.7c24.3-36.2,31.8-88.7,21.5-150.8C440.1,194.2,409.6,188.8,380.2,214.6z"/><path fill="%23FF6B00" d="M275.7,256c0,13.8-11.2,25-25,25s-25-11.2-25-25s11.2-25,25-25S275.7,242.2,275.7,256z"/><path fill="%23000000" d="M250.7,271c-8.3,0-15-6.7-15-15s6.7-15,15-15s15,6.7,15,15S259,271,250.7,271z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transform: scaleX(1);
+            z-index: 1000;
+            user-select: none;
+        }
+
+        #close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        #message {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 18px;
+            color: #ff6b00;
+            font-weight: bold;
+            z-index: 1002;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            display: none;
+        }
+
+        .quack-text {
+            position: absolute;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b00;
+            opacity: 0;
+            animation: fadeOut 1s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="duck"></div>
+    <button id="close-button">X</button>
+    <div id="message">VOCÊ FOI PATROLADO!</div>
+
+    <script>
+        // Elementos principais
+        const duck = document.getElementById('duck');
+        const closeButton = document.getElementById('close-button');
+        const message = document.getElementById('message');
+        
+        // Configurações do pato
+        let duckX = Math.random() * (window.innerWidth - 80);
+        let duckY = Math.random() * (window.innerHeight - 80);
+        let duckSpeedX = 3 * (Math.random() > 0.5 ? 1 : -1);
+        let duckSpeedY = 3 * (Math.random() > 0.5 ? 1 : -1);
+        let buttonCaught = false;
+        let quackCount = 0;
+        
+        // Posição inicial do pato
+        duck.style.left = duckX + 'px';
+        duck.style.top = duckY + 'px';
+        
+        // Loop de animação principal
+        function animate() {
+            // Movimento do pato
+            duckX += duckSpeedX;
+            duckY += duckSpeedY;
+            
+            // Colisão com as paredes
+            if (duckX <= 0 || duckX >= window.innerWidth - 80) {
+                duckSpeedX = -duckSpeedX;
+                // Vira o pato na direção do movimento
+                duck.style.transform = `scaleX(${duckSpeedX > 0 ? 1 : -1})`;
+                quack();
+            }
+            
+            if (duckY <= 0 || duckY >= window.innerHeight - 80) {
+                duckSpeedY = -duckSpeedY;
+                quack();
+            }
+            
+            // Aplica a posição
+            duck.style.left = duckX + 'px';
+            duck.style.top = duckY + 'px';
+            
+            // Verifica colisão com o botão de fechar se não estiver capturado
+            if (!buttonCaught && isColliding(duck, closeButton)) {
+                captureButton();
+            }
+            
+            // Continua a animação
+            requestAnimationFrame(animate);
+        }
+        
+        // Inicia a animação
+        animate();
+        
+        // Mostra a mensagem após 5 segundos
+        setTimeout(() => {
+            message.style.display = 'block';
+            
+            // Esconde após 3 segundos
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }, 5000);
+        
+        // Quando o botão é clicado
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Faz o pato emitir "QUACK" várias vezes
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => quack(), i * 300);
+            }
+            
+            // Mostra a mensagem
+            message.style.display = 'block';
+            message.innerText = "HAHAHA! Não pode me fechar!";
+            
+            // Esconde após 2 segundos
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 2000);
+            
+            // Acelera o pato
+            duckSpeedX *= 1.2;
+            duckSpeedY *= 1.2;
+        });
+        
+        // Verifica colisão entre dois elementos
+        function isColliding(element1, element2) {
+            const rect1 = element1.getBoundingClientRect();
+            const rect2 = element2.getBoundingClientRect();
+            
+            return !(
+                rect1.right < rect2.left || 
+                rect1.left > rect2.right || 
+                rect1.bottom < rect2.top || 
+                rect1.top > rect2.bottom
+            );
+        }
+        
+        // Função para capturar o botão
+        function captureButton() {
+            buttonCaught = true;
+            closeButton.style.position = 'absolute';
+            
+            // Anexa o botão ao pato
+            const offset = {
+                x: 20,
+                y: -20
+            };
+            
+            // Atualiza a posição do botão a cada frame
+            function updateButtonPosition() {
+                closeButton.style.left = (duckX + offset.x) + 'px';
+                closeButton.style.top = (duckY + offset.y) + 'px';
+                requestAnimationFrame(updateButtonPosition);
+            }
+            
+            updateButtonPosition();
+            quack();
+            
+            message.style.display = 'block';
+            message.innerText = "Peguei seu botão! QUACK!";
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Função para fazer o pato dizer "QUACK"
+        function quack() {
+            const quackText = document.createElement('div');
+            quackText.className = 'quack-text';
+            quackText.innerText = "QUACK!";
+            quackText.style.left = (duckX + Math.random() * 40) + 'px';
+            quackText.style.top = (duckY - 20) + 'px';
+            document.body.appendChild(quackText);
+            
+            // Remove o elemento após a animação
+            setTimeout(() => {
+                document.body.removeChild(quackText);
+            }, 1000);
+            
+            // Incrementa o contador de quacks
+            quackCount++;
+            
+            // A cada 10 quacks, mostra uma mensagem especial
+            if (quackCount % 10 === 0) {
+                message.style.display = 'block';
+                message.innerText = "Quack nº " + quackCount + "! Você não vai se livrar de mim!";
+                
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        // Impede que a pessoa dê zoom ou scroll na página
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Impede o comportamento padrão de clique longo no mobile
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        // Detecta quando a pessoa tenta sair da página
+        window.addEventListener('beforeunload', function(e) {
+            // Mensagem que aparecerá no diálogo de confirmação
+            const message = 'Você tem certeza que quer abandonar o Pato?';
+            e.returnValue = message;
+            return message;
+        });
+        
+        // Faz o pato reagir a toques na tela em dispositivos móveis
+        document.addEventListener('touchstart', function(e) {
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            
+            // Calcula a distância entre o toque e o pato
+            const duckCenterX = duckX + 40;
+            const duckCenterY = duckY + 40;
+            const distance = Math.sqrt(
+                Math.pow(touchX - duckCenterX, 2) + 
+                Math.pow(touchY - duckCenterY, 2)
+            );
+            
+            // Se tocou perto do pato
+            if (distance < 100) {
+                quack();
+                
+                // Faz o pato fugir do toque
+                duckSpeedX = 8 * (duckX > touchX ? 1 : -1);
+                duckSpeedY = 8 * (duckY > touchY ? 1 : -1);
+                
+                // Vira o pato na direção do movimento
+                duck.style.transform = `scaleX(${duckSpeedX > 0 ? 1 : -1})`;
+            }
+        });
+    </script>
+</body>
+</html>
